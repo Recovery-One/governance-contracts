@@ -7,7 +7,9 @@
 * Stake depegged tokens for rONE Governance token.
 * Unstake token to exit the rONE.
 * Able to cast vote to Governance contract
-* Commitee 
+* Only committee can propose
+* Governance retains 2.5% for grantee
+* Committee retains 2.5% for compensation
 
 ```mermaid
 sequenceDiagram
