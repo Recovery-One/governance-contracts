@@ -4,6 +4,7 @@
 
 ### Phase 1: Stake/Unstake Depegged Tokens
 
+* Compound based Governance Contract (OpenZeppelin)
 * Stake depegged tokens for rONE Governance token.
 * Unstake token to exit the rONE.
 * Able to cast vote to Governance contract
