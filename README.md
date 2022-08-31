@@ -27,14 +27,35 @@ sequenceDiagram
 ### Phase 2: Staking/Unstake rONE
 
 * RecoveryChef receives 750Mil ONE to pay for rewards
-* Users can delegateVotes before staking.
+* Users can delegateVotes to let another address to vote on their behalf.
 
 ```mermaid
 sequenceDiagram
+    participant Users
+    participant RecoveryChef
+    participant Harmony
+
     Harmony->>RecoveryChef: Transfer(750Mil ONE)
     Users->>RecoveryChef: Stake(rONE, amount)
     Users->>RecoveryChef: Unstake(rONE, amount)
     Users->>RecoveryChef: collectReward()
+```
+
+### Phase 3: ONE Redemption
+
+* RecoveryRedemption receives 2.5 Bil ONE tokens over 3 year period
+
+```mermaid
+sequenceDiagram
+    participant Users
+    participant RecoveryChef
+    participant RecoveryRedemption
+    participant Harmony
+
+    Harmony->>RecoveryRedemption: Funds 2.54 Bil tokens over 3 years
+    Users->>RecoveryChef: Unstake(rONE, amount) (no penalty)
+    Users->>RecoveryRedemption: swapForOne(amount)
+
 ```
 
 ## How to run
