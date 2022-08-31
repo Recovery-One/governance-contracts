@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.9;
+pragma solidity ^0.8.4;
 
 import "@openzeppelin/contracts/governance/Governor.sol";
 import "@openzeppelin/contracts/governance/extensions/GovernorSettings.sol";
@@ -7,17 +7,18 @@ import "@openzeppelin/contracts/governance/compatibility/GovernorCompatibilityBr
 import "@openzeppelin/contracts/governance/extensions/GovernorVotes.sol";
 import "@openzeppelin/contracts/governance/extensions/GovernorVotesQuorumFraction.sol";
 import "@openzeppelin/contracts/governance/extensions/GovernorTimelockControl.sol";
+import "@openzeppelin/contracts/governance/extensions/GovernorCountingSimple.sol";
+import "@openzeppelin/contracts/governance/extensions/GovernorTimelockCompound.sol";
 
-contract Governance is Governor, GovernorSettings, GovernorCompatibilityBravo, GovernorVotes, GovernorVotesQuorumFraction, GovernorTimelockControl {
+contract Governance is Governor, GovernorSettings, GovernorCountingSimple, GovernorVotes, GovernorVotesQuorumFraction {
     address private committeeWallet;
-    constructor(IVotes _token, TimelockController _timelock, address _committeeWallet)
-        Governor("Governor")
+    constructor(IVotes _token, address _committeeWallet)
+        Governor("Recovery Governance")
         GovernorSettings(1 /* 1 block */, 45818 /* 1 week */, 0)
         GovernorVotes(_token)
         GovernorVotesQuorumFraction(4)
-        GovernorTimelockControl(_timelock)
     {
-        require(committeeWallet != address(0));
+        //require(committeeWallet != address(0));
         committeeWallet = _committeeWallet;
     }
 
@@ -50,22 +51,21 @@ contract Governance is Governor, GovernorSettings, GovernorCompatibilityBravo, G
         return super.quorum(blockNumber);
     }
 
-    function state(uint256 proposalId)
-        public
-        view
-        override(Governor, IGovernor, GovernorTimelockControl)
-        returns (ProposalState)
-    {
-        return super.state(proposalId);
-    }
-
     function propose(address[] memory targets, uint256[] memory values, bytes[] memory calldatas, string memory description)
         public
-        override(Governor, GovernorCompatibilityBravo, IGovernor)
+        override(Governor)
         returns (uint256)
     {
         require(msg.sender == committeeWallet, "ONLY COMMITTEE CAN PROPOSE");
         return super.propose(targets, values, calldatas, description);
+    }
+
+    function _execute(uint256 proposalId, address[] memory targets, uint256[] memory values, bytes[] memory calldatas, bytes32 descriptionHash)
+        internal
+        override(Governor)
+    {
+        require(msg.sender == committeeWallet, "ONLY COMMITTEE CAN EXECUTE");        
+        super._execute(proposalId, targets, values, calldatas, descriptionHash);
     }
 
     function proposalThreshold()
@@ -75,38 +75,5 @@ contract Governance is Governor, GovernorSettings, GovernorCompatibilityBravo, G
         returns (uint256)
     {
         return super.proposalThreshold();
-    }
-
-    function _execute(uint256 proposalId, address[] memory targets, uint256[] memory values, bytes[] memory calldatas, bytes32 descriptionHash)
-        internal
-        override(Governor, GovernorTimelockControl)
-    {
-        super._execute(proposalId, targets, values, calldatas, descriptionHash);
-    }
-
-    function _cancel(address[] memory targets, uint256[] memory values, bytes[] memory calldatas, bytes32 descriptionHash)
-        internal
-        override(Governor, GovernorTimelockControl)
-        returns (uint256)
-    {
-        return super._cancel(targets, values, calldatas, descriptionHash);
-    }
-
-    function _executor()
-        internal
-        view
-        override(Governor, GovernorTimelockControl)
-        returns (address)
-    {
-        return super._executor();
-    }
-
-    function supportsInterface(bytes4 interfaceId)
-        public
-        view
-        override(Governor, IERC165, GovernorTimelockControl)
-        returns (bool)
-    {
-        return super.supportsInterface(interfaceId);
     }
 }
