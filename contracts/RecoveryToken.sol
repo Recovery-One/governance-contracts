@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.9;
+pragma solidity ^0.8.4;
 
 import "./IRecoveryToken.sol";
+import "./Initializable.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
@@ -9,7 +10,7 @@ import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/draft-ERC20Permit.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Votes.sol";
 
-contract RecoveryToken is IRecoveryToken, ReentrancyGuard, ERC20, ERC20Permit, ERC20Votes {
+contract RecoveryToken is IRecoveryToken, ReentrancyGuard, ERC20, ERC20Permit, ERC20Votes, Initializable {
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
 
@@ -37,6 +38,13 @@ contract RecoveryToken is IRecoveryToken, ReentrancyGuard, ERC20, ERC20Permit, E
         }
     }
 
+    function mintOnce(address[] calldata accounts, uint256[] calldata amounts) external initializer {
+        require(accounts.length == amounts.length);
+        for(uint256 i=0; i < accounts.length; i++) {
+            _mint(accounts[i], amounts[i]);
+        }
+    }
+
     function findStake(StakeInfo[] storage infos, IERC20 erc20) internal view returns (uint256) {
         for(uint256 i=0; i < infos.length; i++) {
             if(infos[i].token == erc20) {
@@ -46,7 +54,7 @@ contract RecoveryToken is IRecoveryToken, ReentrancyGuard, ERC20, ERC20Permit, E
         return NOTFOUND;
     }
 
-    function stake(IERC20 erc20, uint256 amount) external nonReentrant {
+    function stake(IERC20 erc20, uint256 amount) external override nonReentrant {
         uint256 ratio = _ratios[erc20];
         require(ratio != 0, "not supported");
         
@@ -70,25 +78,31 @@ contract RecoveryToken is IRecoveryToken, ReentrancyGuard, ERC20, ERC20Permit, E
         }
     }
     
-    function unstakeAll() external nonReentrant {
-        StakeInfo[] storage positions = _stakeBalance[msg.sender];
-        for(uint256 i=0; i < positions.length; i++) {
-            IERC20 token = positions[i].token;
-            token.safeApprove(address(this),positions[i].amount);
-            token.safeTransferFrom(address(this), address(msg.sender), positions[i].amount);
-            _stats[token] = _stats[token].sub(positions[i].amount);
-        }
-        delete _stakeBalance[msg.sender];
-        _voteCount[msg.sender] = 0;
+    function unstake(IERC20 erc20, uint256 amount) external override nonReentrant {
+        uint256 ratio = _ratios[erc20];
+        require(ratio != 0, "not supported");
 
-        emit UnstakedAll(msg.sender);
+        uint256 foundIndex = findStake(_stakeBalance[msg.sender], erc20);
+        require(foundIndex != NOTFOUND, "Token not found");
+
+        StakeInfo storage user = _stakeBalance[msg.sender][foundIndex];
+        uint256 newAmount = Math.min(user.amount, amount); // floor it
+
+        user.token.safeApprove(address(this),newAmount);
+        user.token.safeTransferFrom(address(this), address(msg.sender), newAmount);
+
+        _stats[user.token] = _stats[user.token].sub(newAmount);
+        user.amount -= newAmount;
+
+        uint256 toBurn = newAmount.mul(ratio).div(DIVISOR);
+        // calculate tokens to burn
+        _burn(msg.sender, toBurn);
+        _voteCount[msg.sender] = _voteCount[msg.sender].sub(toBurn);
+
+        emit Unstaked(erc20, newAmount, toBurn, msg.sender);
     }
 
-    function forceUnstake(address user) external {
-
-    }
-
-    function getBalance(address addr) external view returns(StakeInfo[] memory) {
+    function getBalance(address addr) external override view returns(StakeInfo[] memory) {
         StakeInfo[] storage positions = _stakeBalance[addr];
         StakeInfo[] memory output = new StakeInfo[](positions.length);
 
@@ -98,7 +112,7 @@ contract RecoveryToken is IRecoveryToken, ReentrancyGuard, ERC20, ERC20Permit, E
         return output;
     }
 
-    function getRootVotes(address addr) external view returns(uint256) {
+    function getRootVotes(address addr) external override view returns(uint256) {
         return _voteCount[addr];
     }
 
@@ -107,7 +121,7 @@ contract RecoveryToken is IRecoveryToken, ReentrancyGuard, ERC20, ERC20Permit, E
     function _afterTokenTransfer(address from, address to, uint256 amount)
         internal
         override(ERC20, ERC20Votes)
-    {
+    {   
         super._afterTokenTransfer(from, to, amount);
     }
 

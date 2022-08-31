@@ -28,6 +28,8 @@ describe("RecoveryToken", function () {
   describe("Core Functionalities", function () {
     it("Staking & Unstake", async function () {
       const { recoveryToken, tokenContracts, ratios, owner, otherAccount } = await loadFixture(simpleFixture);
+      var token0StartBalance = await tokenContracts[1].balanceOf(owner.address);
+
       var stakeAmount =  ethers.utils.parseEther("1");
       await tokenContracts[0].approve(recoveryToken.address, stakeAmount);
       var stakeAction = recoveryToken.stake(tokenContracts[0].address,  stakeAmount);
@@ -74,21 +76,32 @@ describe("RecoveryToken", function () {
 
 
       // UNSTAKE ALL
-      const token0Amount = ethers.BigNumber.from(ethers.utils.parseEther("1.5"))
-      const token1Amount = ethers.BigNumber.from(ethers.utils.parseEther("1.0"))
-      await expect(recoveryToken.unstakeAll()).to
-              .emit(recoveryToken, "UnstakedAll")
-              .withArgs(owner.address)
+      const token0Amount = ethers.BigNumber.from(ethers.utils.parseEther("1.0"))
+      await expect(recoveryToken.unstake(tokenContracts[0].address, token0Amount)).to
+              .emit(recoveryToken, "Unstaked")
+              .withArgs(tokenContracts[0].address, token0Amount, ethers.BigNumber.from(token0Amount).mul(50), owner.address)
               .changeTokenBalances(
                 tokenContracts[0],
                 [recoveryToken, owner.address],
                 [token0Amount.mul(-1), token0Amount]
               )
+
+      var votes = await recoveryToken.getRootVotes(owner.address)
+      expect(votes).to.equal(ethers.BigNumber.from(ethers.utils.parseEther("0.5")).mul(50)
+                        .add(ethers.BigNumber.from(ethers.utils.parseEther("1")).mul(300)))
+
+      // UNSTAKE OVER, should floor
+      const token1Amount = ethers.BigNumber.from(ethers.utils.parseEther("1.0"))
+      await expect(recoveryToken.unstake(tokenContracts[1].address, token1Amount.add(ethers.utils.parseEther("5.0")))).to
+              .emit(recoveryToken, "Unstaked")
+              .withArgs(tokenContracts[1].address, token1Amount, ethers.BigNumber.from(token1Amount).mul(300), owner.address)
               .changeTokenBalances(
                 tokenContracts[1],
                 [recoveryToken, owner.address],
                 [token1Amount.mul(-1), token1Amount]
-              );
+              )
+
+      expect((await tokenContracts[1].balanceOf(owner.address)).sub(token0StartBalance)).to.equal(0);
       
     });
   });
