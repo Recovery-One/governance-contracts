@@ -70,7 +70,7 @@ describe("RecoveryToken", function () {
       expect(res[0].amount).to.equal(ethers.BigNumber.from(stakeAmount).add(ethers.BigNumber.from(stakeAmount2)))        
 
       // VERIFY VOTES
-      var votes = await recoveryToken.getRootVotes(owner.address)
+      var votes = await recoveryToken.balanceOf(owner.address)
       expect(votes).to.equal(ethers.BigNumber.from(ethers.utils.parseEther("1.5")).mul(50)
                         .add(ethers.BigNumber.from(ethers.utils.parseEther("1")).mul(300)))
 
@@ -86,7 +86,7 @@ describe("RecoveryToken", function () {
                 [token0Amount.mul(-1), token0Amount]
               )
 
-      var votes = await recoveryToken.getRootVotes(owner.address)
+      var votes = await recoveryToken.balanceOf(owner.address)
       expect(votes).to.equal(ethers.BigNumber.from(ethers.utils.parseEther("0.5")).mul(50)
                         .add(ethers.BigNumber.from(ethers.utils.parseEther("1")).mul(300)))
 

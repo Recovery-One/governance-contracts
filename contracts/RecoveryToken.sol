@@ -19,22 +19,17 @@ contract RecoveryToken is IRecoveryToken, ReentrancyGuard, ERC20, ERC20Permit, E
     uint256 constant DIVISOR = 10000;
     uint256 constant NOTFOUND = 2**256 - 1;
     mapping(IERC20 => uint256) private _ratios;
-    IERC20[] private _supported;
 
     // owner => staking positions
     mapping(address => StakeInfo[]) private _stakeBalance;
 
-    // owner => vote count
-    mapping(address => uint256) private _voteCount;
-
     // erc20 => total
-    mapping(IERC20 => uint256) private _stats;
+    mapping(IERC20 => uint256) public stats;
 
     constructor(IERC20[] memory tokens, uint256[] memory ratios) ERC20("Recovery One Token", "rONE") ERC20Permit("Recovery One Token")  {
         require(tokens.length == ratios.length);
         for(uint256 i=0; i < tokens.length; i++) {
             _ratios[tokens[i]] = ratios[i];
-            _supported.push(tokens[i]);
         }
     }
 
@@ -70,8 +65,7 @@ contract RecoveryToken is IRecoveryToken, ReentrancyGuard, ERC20, ERC20Permit, E
             StakeInfo storage user = _stakeBalance[msg.sender][foundIndex];
             user.amount = user.amount.add(amount);
             uint256 votes = amount.mul(ratio).div(DIVISOR);
-            _voteCount[msg.sender] = _voteCount[msg.sender].add(votes);
-            _stats[erc20] = _stats[erc20].add(amount);
+            stats[erc20] = stats[erc20].add(amount);
             _mint(msg.sender, votes);
 
             emit Staked(erc20, amount, votes, msg.sender);
@@ -86,18 +80,16 @@ contract RecoveryToken is IRecoveryToken, ReentrancyGuard, ERC20, ERC20Permit, E
         require(foundIndex != NOTFOUND, "Token not found");
 
         StakeInfo storage user = _stakeBalance[msg.sender][foundIndex];
-        uint256 newAmount = Math.min(user.amount, amount); // floor it
+        uint256 newAmount = Math.min(user.amount, amount); // if user does not have enough, we'll use all available
 
-        user.token.safeApprove(address(this),newAmount);
-        user.token.safeTransferFrom(address(this), address(msg.sender), newAmount);
+        user.token.safeTransfer(address(msg.sender), newAmount);
 
-        _stats[user.token] = _stats[user.token].sub(newAmount);
+        stats[user.token] = stats[user.token].sub(newAmount);
         user.amount -= newAmount;
 
         uint256 toBurn = newAmount.mul(ratio).div(DIVISOR);
         // calculate tokens to burn
         _burn(msg.sender, toBurn);
-        _voteCount[msg.sender] = _voteCount[msg.sender].sub(toBurn);
 
         emit Unstaked(erc20, newAmount, toBurn, msg.sender);
     }
@@ -110,10 +102,6 @@ contract RecoveryToken is IRecoveryToken, ReentrancyGuard, ERC20, ERC20Permit, E
             output[i] = StakeInfo(positions[i].token, positions[i].amount);
         }
         return output;
-    }
-
-    function getRootVotes(address addr) external override view returns(uint256) {
-        return _voteCount[addr];
     }
 
     // The following functions are overrides required by Solidity.

@@ -22,6 +22,4 @@ interface IRecoveryToken is IERC20 {
 
     function getBalance(address addr) external view returns(StakeInfo[] memory);
 
-    function getRootVotes(address addr) external view returns(uint256);
-
 }
