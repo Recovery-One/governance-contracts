@@ -9,8 +9,9 @@ import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/draft-ERC20Permit.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Votes.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
 
-contract RecoveryToken is IRecoveryToken, ReentrancyGuard, ERC20, ERC20Permit, ERC20Votes, Initializable {
+contract RecoveryOneToken is IRecoveryToken, ReentrancyGuard, ERC20, ERC20Permit, ERC20Votes, Initializable, Ownable {
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
 
@@ -22,6 +23,7 @@ contract RecoveryToken is IRecoveryToken, ReentrancyGuard, ERC20, ERC20Permit, E
 
     // owner => staking positions
     mapping(address => StakeInfo[]) private _stakeBalance;
+    bool public locked = false;
 
     // erc20 => total
     mapping(IERC20 => uint256) public stats;
@@ -33,7 +35,8 @@ contract RecoveryToken is IRecoveryToken, ReentrancyGuard, ERC20, ERC20Permit, E
         }
     }
 
-    function mintOnce(address[] calldata accounts, uint256[] calldata amounts) external initializer {
+    // will be transfered to Committee Gnosis wallet
+    function mintOnce(address[] calldata accounts, uint256[] calldata amounts) external initializer onlyOwner {
         require(accounts.length == amounts.length);
         for(uint256 i=0; i < accounts.length; i++) {
             _mint(accounts[i], amounts[i]);
@@ -49,7 +52,13 @@ contract RecoveryToken is IRecoveryToken, ReentrancyGuard, ERC20, ERC20Permit, E
         return NOTFOUND;
     }
 
+    function setLocked(bool state) external override onlyOwner {
+        locked = state;
+    }
+
     function stake(IERC20 erc20, uint256 amount) external override nonReentrant {
+        require(locked == false, "must be unlocked");
+
         uint256 ratio = _ratios[erc20];
         require(ratio != 0, "not supported");
         

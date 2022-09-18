@@ -30,7 +30,7 @@ describe("RecoveryToken", function () {
         const tokens = [erc0.address, erc1.address];
         const ratios = [50*DIVISOR, 300*DIVISOR];
 
-        const RecoveryToken = await ethers.getContractFactory("RecoveryToken");
+        const RecoveryToken = await ethers.getContractFactory("RecoveryOneToken");
         const recoveryToken = await RecoveryToken.deploy(tokens, ratios);
         
         console.log("Create governance contract", recoveryToken.address, committeeAccount.address);
