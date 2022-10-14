@@ -1,4 +1,5 @@
-// SPDX-License-Identifier: UNLICENSED
+// SPDX-License-Identifier: MIT
+
 pragma solidity ^0.8.4;
 
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
@@ -20,7 +21,10 @@ contract ExchangeUSDS is IExchangeUSDS, ReentrancyGuard, Ownable {
     mapping(address => bool) public supported;
     
     // address => total refunded so far
-    mapping(address => uint256) public refundStats;
+    mapping(address => uint256) public refundByUser;
+    
+    // erc20 => total amount
+    mapping(address => uint256) public refundByToken;
     
     address public refundToken;
     uint256 public pegRateRONE;
@@ -71,6 +75,9 @@ contract ExchangeUSDS is IExchangeUSDS, ReentrancyGuard, Ownable {
         (uint256 refundAmount, ) = this.getExchangeRate(address(erc20), amount);
         IERC20(refundToken).safeTransferFrom(address(this), msg.sender, refundAmount);
         IERC20Burnable(address(erc20)).burn(amount);
+
+        refundByUser[msg.sender] += refundAmount;
+        refundByToken[address(erc20)] += amount;
         
         emit BurnToken(address(erc20), amount, refundToken, refundAmount);
     }
