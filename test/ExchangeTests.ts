@@ -22,7 +22,7 @@ describe("RecoveryToken", function () {
     const voterAddresses = [owner.address];
     const votes = [1];
     const tokens = [erc1.address];
-    const ratios = ["384172000000000000"];
+    const ratios = ["10000"];
     const ExchangeUSDS = await ethers.getContractFactory("ExchangeUSDS");
     const exchangeContract = await ExchangeUSDS.deploy(voterAddresses, votes, tokens, ratios, refundToken.address, ethers.utils.parseEther("100"));
     const tokenContracts = [erc1];
@@ -41,14 +41,14 @@ describe("RecoveryToken", function () {
         const tokenToBurn = ethers.utils.parseUnits("100", 6);
         const prehackedValue = await exchangeContract.calculatePrehackOnePrice(tokenContracts[0].address, tokenToBurn);
         expect(prehackedValue).to.equal(ethers.BigNumber.from(tokenToBurn).mul(ratios[0]).div(DIVISOR));
-        console.log("prehacked $100 => ", prehackedValue, ethers.utils.formatEther(prehackedValue))
+        console.log("prehacked $100 => ", prehackedValue, ethers.utils.formatUnits(prehackedValue, 6))
 
         // TEST FOR R1Voter
         var isR1Voter = await exchangeContract.isR1Voter(owner.address);
         console.log("isVoter", isR1Voter);
         expect(isR1Voter).to.equal("1");
         var [USDSReturn, voter] = await exchangeContract.getExchangeRate(owner.address, tokenContracts[0].address, tokenToBurn);
-        expect(USDSReturn).to.equal(prehackedValue.mul(1500).div(DIVISOR).div(10**12))
+        expect(USDSReturn).to.equal(prehackedValue.mul(1500).div(DIVISOR))
         console.log("Expected USDS=", USDSReturn, voter, ethers.utils.formatUnits(USDSReturn, 6));
         expect(voter).to.equal(true);
 
@@ -74,7 +74,7 @@ describe("RecoveryToken", function () {
             var isR1Voter = await exchangeContract.isR1Voter(otherAccount.address);
             expect(isR1Voter).to.equal("0");
             var [USDSReturn, voter] = await exchangeContract.getExchangeRate(otherAccount.address, tokenContracts[0].address, tokenToBurn);
-            expect(USDSReturn).to.equal(prehackedValue.mul(1000).div(DIVISOR).div(10**12))
+            expect(USDSReturn).to.equal(prehackedValue.mul(1000).div(DIVISOR))
             console.log("USDS=", USDSReturn, voter, ethers.utils.formatUnits(USDSReturn, 6));
             expect(voter).to.equal(false);
             

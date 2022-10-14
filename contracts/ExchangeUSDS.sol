@@ -69,11 +69,14 @@ contract ExchangeUSDS is IExchangeUSDS, ReentrancyGuard, Ownable {
         refundMaxPerAddress = _refundMaxPerAddress;        
     }
     
+    function withdraw() external override onlyOwner {
+        IERC20(refundToken).transfer(owner(), IERC20(refundToken).balanceOf(address(this)));            
+    }
+    
     function burn(IERC20 erc20, uint256 amount) external override nonReentrant {
         require(locked == false, "must be unlocked");
         require(supported[address(erc20)] == true, "token not supported");
         
-        // erc20.safeTransferFrom(address(msg.sender), address(this), amount);
         IERC20Burnable(address(erc20)).burnFrom(msg.sender, amount);
         
         (uint256 refundAmount, ) = this.getExchangeRate(msg.sender, address(erc20), amount);
@@ -102,7 +105,7 @@ contract ExchangeUSDS is IExchangeUSDS, ReentrancyGuard, Ownable {
         uint256 OneAmount = this.calculatePrehackOnePrice(address(erc20), amount);
         bool qualified = this.isR1Voter(owner) > 0;
         uint256 rate = qualified ? pegRateRONE : pegRateNonRONE;
-        uint256 refundAmount = OneAmount.mul(rate).div(DIVISOR).div(deltaDec);
+        uint256 refundAmount = OneAmount.mul(rate).div(DIVISOR);
         return (refundAmount, qualified);
     }
     

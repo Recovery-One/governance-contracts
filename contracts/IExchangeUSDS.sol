@@ -12,6 +12,7 @@ interface IExchangeUSDS {
     function setRateForNonR1(uint256 rate) external;    
     function setTokenSupport(address erc, bool allowed) external;
     function setRefundMaximumPerWallet(uint256 amount) external;
+    function withdraw() external;
     
     // BURN ERC20 and get refund token (USDS)
     function burn(IERC20 erc20, uint256 amount) external;
