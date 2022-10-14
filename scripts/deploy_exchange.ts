@@ -23,7 +23,7 @@ var depegged  = [["1USDC","0x985458E523dB3d53125813eD68c274899e9DfAb4","10000"],
                 ["1WETH","0xF720b7910C6b2FF5bd167171aDa211E226740bfe",200]]
 
 async function main() {
-
+  const [owner] = await ethers.getSigners();
     const voters = votes.map(e=>e.voter);
     const votesCount = votes.map(e=>parseInt(e.vp.toString()));
     const tokens = depegged.map(e =>e[1].toString());
@@ -32,19 +32,22 @@ async function main() {
     const ErcMock = await ethers.getContractFactory("ERCMock");
     const mockToken = await ErcMock.deploy("USDSMock", "USDSMOCK");
 
-    const ExchangeUSDS = await ethers.getContractFactory("ExchangeUSDS");
-
-    const exchangeContract = await upgrades.deployProxy(ExchangeUSDS, [voters, votesCount, tokens, ratios, mockToken.address, ethers.utils.parseEther("10000")], {
-      initializer: "initialize",
-      kind: "transparent"
-    });
-    await exchangeContract.deployed();
+    const ExchangeUSDS = await ethers.getContractFactory("ExchangeUSDS"); 
+    const exchangeContractImpl = await ExchangeUSDS.deploy();
+    console.log("Exchange Implementation=", exchangeContractImpl.address);
     
-    await exchangeContract.setRateForR1(2000);
-    await exchangeContract.setRateForNonR1(1000);    
-    await exchangeContract.setRefundMaximumPerWallet(ethers.utils.parseUnits("1000", 6));    
+    const RecoveryExchangeProxy = await ethers.getContractFactory("RecoveryExchangeProxy");
+    
+    const initializer = ExchangeUSDS.interface.encodeFunctionData("initialize", [voters, votesCount, tokens, ratios, mockToken.address, ethers.utils.parseEther("10000")]);
+    console.log("Initializer:", initializer);
+    const exchangeContract = await RecoveryExchangeProxy.deploy(exchangeContractImpl.address, owner.address, initializer);
+    console.log("Proxy:", exchangeContract.address);
 
-    await exchangeContract.setTokenSupport("0x985458E523dB3d53125813eD68c274899e9DfAb4", true);
+    // const exchangeContract = await upgrades.deployProxy(ExchangeUSDS, , {
+    //   initializer: "initialize",
+    //   kind: "transparent"
+    // });
+    
     await mockToken.transfer(exchangeContract.address, ethers.utils.parseUnits("100000", 6));
     
     
