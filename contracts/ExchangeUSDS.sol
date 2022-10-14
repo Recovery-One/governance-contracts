@@ -46,23 +46,23 @@ contract ExchangeUSDS is IExchangeUSDS, ReentrancyGuard, Ownable {
         locked = state;
     }
         
-    function setRateForR1(uint256 rate) external onlyOwner {
+    function setRateForR1(uint256 rate) external override onlyOwner {
         pegRateRONE = rate;
     }
     
-    function setRateForNonR1(uint256 rate) external onlyOwner {
+    function setRateForNonR1(uint256 rate) external override onlyOwner {
         pegRateNonRONE = rate;        
     }
     
-    function setTokenSupport(address erc, bool allowed) external onlyOwner {
+    function setTokenSupport(address erc, bool allowed) external override onlyOwner {
         supported[erc] = allowed;
     }
     
-    function setRefundMaximumPerWallet(uint256 _refundMaxPerAddress) external onlyOwner {
+    function setRefundMaximumPerWallet(uint256 _refundMaxPerAddress) external override onlyOwner {
         refundMaxPerAddress = _refundMaxPerAddress;        
     }
     
-    function burn(IERC20 erc20, uint256 amount) external nonReentrant {
+    function burn(IERC20 erc20, uint256 amount) external override nonReentrant {
         require(locked == false, "must be unlocked");
         require(supported[address(erc20)] == true, "token not supported");
         
@@ -75,18 +75,18 @@ contract ExchangeUSDS is IExchangeUSDS, ReentrancyGuard, Ownable {
         emit BurnToken(address(erc20), amount, refundToken, refundAmount);
     }
         
-    function calculatePrehackOnePrice(address erc20, uint256 amount) external view returns (uint256) {
+    function calculatePrehackOnePrice(address erc20, uint256 amount) external override view returns (uint256) {
         uint256 ratio = ratios[erc20];
         require(ratio != 0, "not supported");
         uint256 rONE = amount.mul(ratio).div(DIVISOR);
         return rONE;   
     }
     
-    function isR1Voter(address voter) external view returns (uint256) {
+    function isR1Voter(address voter) external override view returns (uint256) {
         return rONEVoters[voter];
     }
     
-    function getExchangeRate(address erc20, uint256 amount) external view returns (uint256, bool) {
+    function getExchangeRate(address erc20, uint256 amount) external override view returns (uint256, bool) {
         uint256 OneAmount = this.calculatePrehackOnePrice(address(erc20), amount);
         bool qualified = this.isR1Voter(msg.sender) > 0;
         uint256 rate = qualified ? pegRateRONE : pegRateNonRONE;
