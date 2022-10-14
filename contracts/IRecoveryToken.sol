@@ -16,6 +16,9 @@ interface IRecoveryToken is IERC20 {
         uint256 amount;
     }
 
+    // ability to prevent more staking / unstake always allowed
+    function setLocked(bool state) external;
+
     function stake(IERC20 erc20, uint256 amount) external;
 
     function unstake(IERC20 erc20, uint256 amount) external;

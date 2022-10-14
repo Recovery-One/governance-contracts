@@ -18,7 +18,7 @@ describe("RecoveryToken", function () {
 
     const tokens = [erc0.address, erc1.address];
     const ratios = [50*DIVISOR, 300*DIVISOR];
-    const RecoveryToken = await ethers.getContractFactory("RecoveryToken");
+    const RecoveryToken = await ethers.getContractFactory("RecoveryOneToken");
     const recoveryToken = await RecoveryToken.deploy(tokens, ratios);
     const tokenContracts = [erc0, erc1];
     return { recoveryToken, tokenContracts, ratios, owner, otherAccount };
