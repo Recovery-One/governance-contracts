@@ -4,6 +4,7 @@ pragma solidity ^0.8.4;
 
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "./IExchangeUSDS.sol";
@@ -31,6 +32,7 @@ contract ExchangeUSDS is IExchangeUSDS, ReentrancyGuard, Ownable {
     uint256 public pegRateNonRONE;
     uint256 public refundMaxPerAddress;
     bool public locked = false;
+    uint256 public deltaDec;
     
     constructor(address[] memory voterAddresses, uint256[]  memory votes,
                 address[] memory tokens, uint256[] memory _ratios, address _refundToken, uint256 _refundMaxPerAddress) {
@@ -44,6 +46,7 @@ contract ExchangeUSDS is IExchangeUSDS, ReentrancyGuard, Ownable {
         }
         refundToken = _refundToken;
         refundMaxPerAddress = _refundMaxPerAddress;
+        deltaDec = 10**(18-IERC20Metadata(_refundToken).decimals());
     }
 
     function setLocked(bool state) external override onlyOwner {
@@ -70,11 +73,13 @@ contract ExchangeUSDS is IExchangeUSDS, ReentrancyGuard, Ownable {
         require(locked == false, "must be unlocked");
         require(supported[address(erc20)] == true, "token not supported");
         
-        erc20.safeTransferFrom(address(msg.sender), address(this), amount);
+        // erc20.safeTransferFrom(address(msg.sender), address(this), amount);
+        IERC20Burnable(address(erc20)).burnFrom(msg.sender, amount);
         
-        (uint256 refundAmount, ) = this.getExchangeRate(address(erc20), amount);
-        IERC20(refundToken).safeTransferFrom(address(this), msg.sender, refundAmount);
-        IERC20Burnable(address(erc20)).burn(amount);
+        (uint256 refundAmount, ) = this.getExchangeRate(msg.sender, address(erc20), amount);
+        require(refundByUser[msg.sender] + refundAmount < refundMaxPerAddress, "Maximum per address reached");
+
+        IERC20(refundToken).transfer(msg.sender, refundAmount);
 
         refundByUser[msg.sender] += refundAmount;
         refundByToken[address(erc20)] += amount;
@@ -93,11 +98,11 @@ contract ExchangeUSDS is IExchangeUSDS, ReentrancyGuard, Ownable {
         return rONEVoters[voter];
     }
     
-    function getExchangeRate(address erc20, uint256 amount) external override view returns (uint256, bool) {
+    function getExchangeRate(address owner, address erc20, uint256 amount) external override view returns (uint256, bool) {
         uint256 OneAmount = this.calculatePrehackOnePrice(address(erc20), amount);
-        bool qualified = this.isR1Voter(msg.sender) > 0;
+        bool qualified = this.isR1Voter(owner) > 0;
         uint256 rate = qualified ? pegRateRONE : pegRateNonRONE;
-        uint256 refundAmount = OneAmount.mul(rate).div(DIVISOR);
+        uint256 refundAmount = OneAmount.mul(rate).div(DIVISOR).div(deltaDec);
         return (refundAmount, qualified);
     }
     

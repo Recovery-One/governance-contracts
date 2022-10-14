@@ -19,5 +19,5 @@ interface IExchangeUSDS {
     // READ FUNCTIONS
     function isR1Voter(address voter) external view returns (uint256);
     function calculatePrehackOnePrice(address erc, uint256 amount) external view returns (uint256);
-    function getExchangeRate(address erc20, uint256 amount) external view returns (uint256, bool);    
+    function getExchangeRate(address owner, address erc20, uint256 amount) external view returns (uint256, bool);    
 }
