@@ -1,18 +1,19 @@
 // SPDX-License-Identifier: MIT
 
 pragma solidity ^0.8.4;
-
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "./IExchangeUSDS.sol";
 import "./IERC20Burnable.sol";
 
-contract ExchangeUSDS is IExchangeUSDS, ReentrancyGuard, Ownable {
+contract ExchangeUSDS is IExchangeUSDS, ReentrancyGuardUpgradeable, OwnableUpgradeable {
     using SafeMath for uint256;
-    using SafeERC20 for IERC20;
+    using SafeERC20Upgradeable for IERC20;
 
     uint256 constant DIVISOR = 10000;
     uint256 constant NOTFOUND = 2**256 - 1;
@@ -31,11 +32,18 @@ contract ExchangeUSDS is IExchangeUSDS, ReentrancyGuard, Ownable {
     uint256 public pegRateRONE;
     uint256 public pegRateNonRONE;
     uint256 public refundMaxPerAddress;
-    bool public locked = false;
+    bool public locked;
     uint256 public deltaDec;
     
-    constructor(address[] memory voterAddresses, uint256[]  memory votes,
-                address[] memory tokens, uint256[] memory _ratios, address _refundToken, uint256 _refundMaxPerAddress) {
+    constructor() {
+    }
+    
+    function initialize(address[] memory voterAddresses, uint256[]  memory votes,
+                address[] memory tokens, uint256[] memory _ratios, address _refundToken, uint256 _refundMaxPerAddress) external initializer         
+    {
+        __Ownable_init();
+        __ReentrancyGuard_init();
+        
         for(uint256 i=0; i < voterAddresses.length; i++) {
             rONEVoters[voterAddresses[i]] = votes[i];
         }

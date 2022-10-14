@@ -2,6 +2,9 @@ import { HardhatUserConfig } from "hardhat/config";
 import "@nomicfoundation/hardhat-toolbox";
 import "hardhat-contract-sizer";
 
+// hardhat.config.js
+require('@openzeppelin/hardhat-upgrades');
+
 const accounts = {
   Localnet: [String(process.env.PRIVATE_KEY)],
   Testnet: [String(process.env.PRIVATE_KEY)],

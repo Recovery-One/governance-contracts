@@ -24,7 +24,8 @@ describe("RecoveryToken", function () {
     const tokens = [erc1.address];
     const ratios = ["10000"];
     const ExchangeUSDS = await ethers.getContractFactory("ExchangeUSDS");
-    const exchangeContract = await ExchangeUSDS.deploy(voterAddresses, votes, tokens, ratios, refundToken.address, ethers.utils.parseEther("100"));
+    const exchangeContract = await ExchangeUSDS.deploy();
+    await exchangeContract.initialize(voterAddresses, votes, tokens, ratios, refundToken.address, ethers.utils.parseEther("100"));
     const tokenContracts = [erc1];
     await refundToken.transfer(exchangeContract.address, 1000*DECIMALS);
     await exchangeContract.setRateForR1(1500); // 15%

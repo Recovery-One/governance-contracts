@@ -1,4 +1,5 @@
 import { ethers } from "hardhat";
+const { upgrades } = require("hardhat");
 
 interface Voter {
     voter: string;
@@ -32,7 +33,13 @@ async function main() {
     const mockToken = await ErcMock.deploy("USDSMock", "USDSMOCK");
 
     const ExchangeUSDS = await ethers.getContractFactory("ExchangeUSDS");
-    const exchangeContract = await ExchangeUSDS.deploy(voters, votesCount, tokens, ratios, mockToken.address, ethers.utils.parseEther("10000"));
+
+    const exchangeContract = await upgrades.deployProxy(ExchangeUSDS, [voters, votesCount, tokens, ratios, mockToken.address, ethers.utils.parseEther("10000")], {
+      initializer: "initialize",
+      kind: "transparent"
+    });
+    await exchangeContract.deployed();
+    
     await exchangeContract.setRateForR1(2000);
     await exchangeContract.setRateForNonR1(1000);    
     await exchangeContract.setRefundMaximumPerWallet(ethers.utils.parseUnits("1000", 6));    
