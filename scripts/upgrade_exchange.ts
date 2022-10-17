@@ -7,7 +7,9 @@ async function main() {
     const ExchangeUSDS = await ethers.getContractFactory("ExchangeUSDS")
     const exchangeContractImpl = await ExchangeUSDS.deploy();
     const exchangeContract = await upgrades.upgradeProxy(proxy, exchangeContractImpl)
-    // await exchangeContract.setRefundToken()
+    
+    // set to correct USDS address
+    await exchangeContract.setRefundToken("0x471f66F75af9238A2FA23bA23862B5957109fB21")
 }
 
 main().catch((error) => {
