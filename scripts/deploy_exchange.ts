@@ -38,15 +38,15 @@ async function main() {
     
     const RecoveryExchangeProxy = await ethers.getContractFactory("RecoveryExchangeProxy");
     
-    const initializer = ExchangeUSDS.interface.encodeFunctionData("initialize", [voters, votesCount, tokens, ratios, mockToken.address, ethers.utils.parseEther("10000")]);
-    console.log("Initializer:", initializer);
-    const exchangeContract = await RecoveryExchangeProxy.deploy(exchangeContractImpl.address, owner.address, initializer);
-    console.log("Proxy:", exchangeContract.address);
+    // const initializer = ExchangeUSDS.interface.encodeFunctionData("initialize", [voters, votesCount, tokens, ratios, mockToken.address, ethers.utils.parseEther("10000")]);
+    // console.log("Initializer:", initializer);
+    // const exchangeContract = await RecoveryExchangeProxy.deploy(exchangeContractImpl.address, owner.address, initializer);
+    // console.log("Proxy:", exchangeContract.address);
 
-    // const exchangeContract = await upgrades.deployProxy(ExchangeUSDS, , {
-    //   initializer: "initialize",
-    //   kind: "transparent"
-    // });
+    const exchangeContract = await upgrades.deployProxy(ExchangeUSDS, [voters, votesCount, tokens, ratios, mockToken.address, ethers.utils.parseEther("10000")], {
+      initializer: "initialize",
+      kind: "transparent"
+    });
     
     await mockToken.transfer(exchangeContract.address, ethers.utils.parseUnits("100000", 6));
     

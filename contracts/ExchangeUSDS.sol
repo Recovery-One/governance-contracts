@@ -57,6 +57,10 @@ contract ExchangeUSDS is IExchangeUSDS, ReentrancyGuardUpgradeable, OwnableUpgra
         deltaDec = 10**(18-IERC20Metadata(_refundToken).decimals());
     }
 
+    function setRefundToken(address erc) external override onlyOwner {
+        refundToken = erc;
+    }
+
     function setLocked(bool state) external override onlyOwner {
         locked = state;
     }

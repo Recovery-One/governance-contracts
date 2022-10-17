@@ -7,6 +7,7 @@ interface IExchangeUSDS {
     event BurnToken(address erc20, uint256 amount, address refundToken, uint256 refundAmount);
     
     // WRITE FUNCTIONS: ONLY R1 COMMITTEE CAN UPDATE
+    function setRefundToken(address erc) external;
     function setLocked(bool state) external;
     function setRateForR1(uint256 rate) external;
     function setRateForNonR1(uint256 rate) external;    
