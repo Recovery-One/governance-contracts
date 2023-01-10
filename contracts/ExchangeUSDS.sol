@@ -118,6 +118,18 @@ contract ExchangeUSDS is IExchangeUSDS, ReentrancyGuardUpgradeable, OwnableUpgra
         bool qualified = this.isR1Voter(owner) > 0;
         uint256 rate = qualified ? pegRateRONE : pegRateNonRONE;
         uint256 refundAmount = OneAmount.mul(rate).div(DIVISOR);
+        
+        uint8 targetDec = IERC20Metadata(erc20).decimals();
+        uint8 refundDec = IERC20Metadata(refundToken).decimals();
+        if(targetDec > refundDec) {
+            uint256 deltaDec_ = 10**(targetDec - refundDec);            
+            refundAmount = refundAmount.div(deltaDec_);
+        }
+        else if(refundDec > targetDec) {
+            uint256 deltaDec_ = 10**(refundDec - targetDec);            
+            refundAmount = refundAmount.mul(deltaDec_);            
+        }
+
         return (refundAmount, qualified);
     }
     
