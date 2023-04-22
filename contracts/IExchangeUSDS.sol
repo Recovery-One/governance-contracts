@@ -16,7 +16,7 @@ interface IExchangeUSDS {
     function withdraw() external;
     
     // BURN ERC20 and get refund token (USDS)
-    function burn(IERC20 erc20, uint256 amount) external;
+    function burn(IERC20 erc20, uint256 amount, bytes32 hash) external;
     
     // READ FUNCTIONS
     function isR1Voter(address voter) external view returns (uint256);

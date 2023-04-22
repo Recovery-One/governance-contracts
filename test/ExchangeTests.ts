@@ -69,7 +69,7 @@ describe("RecoveryToken", function () {
       
     })
     
-    it.skip("Stake & burn", async function () {
+    it("Stake & burn", async function () {
         const { exchangeContract, refundToken, tokenContracts, ratios, owner, otherAccount } = await loadFixture(simpleFixture);
         console.log("Exchange USDS", await refundToken.balanceOf(exchangeContract.address));
         console.log("Owner balance USDC", await tokenContracts[0].balanceOf(owner.address));
@@ -89,10 +89,23 @@ describe("RecoveryToken", function () {
         expect(voter).to.equal(true);
 
         await tokenContracts[0].approve(exchangeContract.address, tokenToBurn)
+        
         console.log("allow?", await tokenContracts[0].allowance(owner.address, exchangeContract.address))
         console.log("to burn", tokenToBurn);
+        var refundState = await exchangeContract.refundByUser(owner.address);
+        console.log("refund state 1", refundState)
         
-        await expect(exchangeContract.burn(tokenContracts[0].address, tokenToBurn))
+        var prehash = ethers.utils.defaultAbiCoder.encode(["bytes32", "address", "uint256", "address", "address", "uint256"], 
+                                                        [ethers.utils.id("harmony+recovery>1"), 
+                                                        owner.address,
+                                                        refundState,
+                                                        exchangeContract.address,
+                                                        tokenContracts[0].address, 
+                                                        tokenToBurn]);
+        var hash = ethers.utils.keccak256(prehash);
+        console.log("Secret hash0=", prehash, hash);                                                       
+        
+        await expect(exchangeContract.burn(tokenContracts[0].address, tokenToBurn, hash))
             .to.emit(exchangeContract, "BurnToken")
             .withArgs(tokenContracts[0].address, tokenToBurn, refundToken.address, USDSReturn)
             .changeTokenBalances(
@@ -105,6 +118,27 @@ describe("RecoveryToken", function () {
                 [exchangeContract, owner.address],
                 [USDSReturn.mul(-1), USDSReturn]
               )              
+              
+        // expect to fail!
+        await expect(exchangeContract.burn(tokenContracts[0].address, tokenToBurn, hash)).to.be.revertedWith("wrong expected hash, bot?")
+        
+        
+        // should update based on new state
+        var refundState = await exchangeContract.refundByUser(owner.address);
+        console.log("refund state 2", refundState)
+
+        var prehash = ethers.utils.defaultAbiCoder.encode(["bytes32", "address", "uint256", "address", "address", "uint256"], 
+                                                        [ethers.utils.id("harmony+recovery>1"), 
+                                                        owner.address,
+                                                        refundState,
+                                                        exchangeContract.address,
+                                                        tokenContracts[0].address, 
+                                                        tokenToBurn]);
+        var hash = ethers.utils.keccak256(prehash);
+        console.log("Secret hash0b=", prehash, hash);                                                       
+        
+        await expect(exchangeContract.burn(tokenContracts[0].address, tokenToBurn, hash))
+                      
         // TEST FOR NON VOTER
         {
             var isR1Voter = await exchangeContract.isR1Voter(otherAccount.address);
@@ -115,7 +149,18 @@ describe("RecoveryToken", function () {
             expect(voter).to.equal(false);
             
             await tokenContracts[0].connect(otherAccount).approve(exchangeContract.address, tokenToBurn)            
-            await expect(exchangeContract.connect(otherAccount).burn(tokenContracts[0].address, tokenToBurn))
+
+            var prehash = ethers.utils.defaultAbiCoder.encode(["bytes32", "address","uint256",  "address", "address", "uint256"], 
+                                                                [ethers.utils.id("harmony+recovery>1"), 
+                                                                otherAccount.address,
+                                                                await exchangeContract.refundByUser(otherAccount.address),
+                                                                exchangeContract.address,
+                                                                tokenContracts[0].address, 
+                                                                tokenToBurn]);
+            var hash = ethers.utils.keccak256(prehash);
+            console.log("Secret hash11=", prehash, hash, tokenContracts[0].address);                                                       
+
+            await expect(exchangeContract.connect(otherAccount).burn(tokenContracts[0].address, tokenToBurn, hash))
             .to.emit(exchangeContract, "BurnToken")
             .withArgs(tokenContracts[0].address, tokenToBurn, refundToken.address, USDSReturn)
             .changeTokenBalances(
