@@ -1,0 +1,204 @@
+{
+  "manifestVersion": "3.2",
+  "admin": {
+    "address": "0xA35BDf7Cd347B20dCB22396FC9C6f3442C5E0769",
+    "txHash": "0x0ac2ca8b08be9a90d72ad99c33e174f74d67e39199bd799f3e841c9516ec1e0d"
+  },
+  "proxies": [
+    {
+      "address": "0x88197cE37D4e9bd5CF043415A991e4341B2BF06b",
+      "txHash": "0xffa59db99234a7a18951c7b8ea541440ce3ff123cfa7e9d8bdd6a36efacdc205",
+      "kind": "transparent"
+    }
+  ],
+  "impls": {
+    "6c8c8724c0864bb7571564edbd51f1a4cbfd97cb3ad87e040779cb02527d931d": {
+      "address": "0xB4BB7B9DA9CAf5C055202279fA14451e6bC1f930",
+      "txHash": "0xb6ae32750fc4aef180befd77abe095de8549b45ac2aaf96cbac9e485af30f1bc",
+      "layout": {
+        "solcVersion": "0.8.4",
+        "storage": [
+          {
+            "label": "_initialized",
+            "offset": 0,
+            "slot": "0",
+            "type": "t_uint8",
+            "contract": "Initializable",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:62",
+            "retypedFrom": "bool"
+          },
+          {
+            "label": "_initializing",
+            "offset": 1,
+            "slot": "0",
+            "type": "t_bool",
+            "contract": "Initializable",
+            "src": "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol:67"
+          },
+          {
+            "label": "_status",
+            "offset": 0,
+            "slot": "1",
+            "type": "t_uint256",
+            "contract": "ReentrancyGuardUpgradeable",
+            "src": "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol:38"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "2",
+            "type": "t_array(t_uint256)49_storage",
+            "contract": "ReentrancyGuardUpgradeable",
+            "src": "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol:80"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "51",
+            "type": "t_array(t_uint256)50_storage",
+            "contract": "ContextUpgradeable",
+            "src": "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol:36"
+          },
+          {
+            "label": "_owner",
+            "offset": 0,
+            "slot": "101",
+            "type": "t_address",
+            "contract": "OwnableUpgradeable",
+            "src": "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol:22"
+          },
+          {
+            "label": "__gap",
+            "offset": 0,
+            "slot": "102",
+            "type": "t_array(t_uint256)49_storage",
+            "contract": "OwnableUpgradeable",
+            "src": "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol:94"
+          },
+          {
+            "label": "ratios",
+            "offset": 0,
+            "slot": "151",
+            "type": "t_mapping(t_address,t_uint256)",
+            "contract": "ExchangeUSDS",
+            "src": "contracts/ExchangeUSDS.sol:21"
+          },
+          {
+            "label": "rONEVoters",
+            "offset": 0,
+            "slot": "152",
+            "type": "t_mapping(t_address,t_uint256)",
+            "contract": "ExchangeUSDS",
+            "src": "contracts/ExchangeUSDS.sol:22"
+          },
+          {
+            "label": "supported",
+            "offset": 0,
+            "slot": "153",
+            "type": "t_mapping(t_address,t_bool)",
+            "contract": "ExchangeUSDS",
+            "src": "contracts/ExchangeUSDS.sol:23"
+          },
+          {
+            "label": "refundByUser",
+            "offset": 0,
+            "slot": "154",
+            "type": "t_mapping(t_address,t_uint256)",
+            "contract": "ExchangeUSDS",
+            "src": "contracts/ExchangeUSDS.sol:26"
+          },
+          {
+            "label": "refundByToken",
+            "offset": 0,
+            "slot": "155",
+            "type": "t_mapping(t_address,t_uint256)",
+            "contract": "ExchangeUSDS",
+            "src": "contracts/ExchangeUSDS.sol:29"
+          },
+          {
+            "label": "refundToken",
+            "offset": 0,
+            "slot": "156",
+            "type": "t_address",
+            "contract": "ExchangeUSDS",
+            "src": "contracts/ExchangeUSDS.sol:31"
+          },
+          {
+            "label": "pegRateRONE",
+            "offset": 0,
+            "slot": "157",
+            "type": "t_uint256",
+            "contract": "ExchangeUSDS",
+            "src": "contracts/ExchangeUSDS.sol:32"
+          },
+          {
+            "label": "pegRateNonRONE",
+            "offset": 0,
+            "slot": "158",
+            "type": "t_uint256",
+            "contract": "ExchangeUSDS",
+            "src": "contracts/ExchangeUSDS.sol:33"
+          },
+          {
+            "label": "refundMaxPerAddress",
+            "offset": 0,
+            "slot": "159",
+            "type": "t_uint256",
+            "contract": "ExchangeUSDS",
+            "src": "contracts/ExchangeUSDS.sol:34"
+          },
+          {
+            "label": "locked",
+            "offset": 0,
+            "slot": "160",
+            "type": "t_bool",
+            "contract": "ExchangeUSDS",
+            "src": "contracts/ExchangeUSDS.sol:35"
+          },
+          {
+            "label": "deltaDec",
+            "offset": 0,
+            "slot": "161",
+            "type": "t_uint256",
+            "contract": "ExchangeUSDS",
+            "src": "contracts/ExchangeUSDS.sol:36"
+          }
+        ],
+        "types": {
+          "t_address": {
+            "label": "address",
+            "numberOfBytes": "20"
+          },
+          "t_array(t_uint256)49_storage": {
+            "label": "uint256[49]",
+            "numberOfBytes": "1568"
+          },
+          "t_array(t_uint256)50_storage": {
+            "label": "uint256[50]",
+            "numberOfBytes": "1600"
+          },
+          "t_bool": {
+            "label": "bool",
+            "numberOfBytes": "1"
+          },
+          "t_mapping(t_address,t_bool)": {
+            "label": "mapping(address => bool)",
+            "numberOfBytes": "32"
+          },
+          "t_mapping(t_address,t_uint256)": {
+            "label": "mapping(address => uint256)",
+            "numberOfBytes": "32"
+          },
+          "t_uint256": {
+            "label": "uint256",
+            "numberOfBytes": "32"
+          },
+          "t_uint8": {
+            "label": "uint8",
+            "numberOfBytes": "1"
+          }
+        }
+      }
+    }
+  }
+}

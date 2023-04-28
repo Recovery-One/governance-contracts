@@ -51,6 +51,7 @@ contract ExchangeUSDS is IExchangeUSDS, ReentrancyGuardUpgradeable, OwnableUpgra
         require(tokens.length == _ratios.length);
         for(uint256 i=0; i < tokens.length; i++) {
             ratios[tokens[i]] = _ratios[i];
+            supported[tokens[i]] = true;
         }
         refundToken = _refundToken;
         refundMaxPerAddress = _refundMaxPerAddress;
@@ -85,14 +86,19 @@ contract ExchangeUSDS is IExchangeUSDS, ReentrancyGuardUpgradeable, OwnableUpgra
         IERC20(refundToken).transfer(owner(), IERC20(refundToken).balanceOf(address(this)));            
     }
     
-    function burn(IERC20 erc20, uint256 amount) external override nonReentrant {
+    function burn(IERC20 erc20, uint256 amount, bytes32 hash) external override nonReentrant {
         require(locked == false, "must be unlocked");
         require(supported[address(erc20)] == true, "token not supported");
+        require(msg.sender.code.length == 0, "bad bot!");
+        require(amount > 100, "require minimum 100");
+        
+        bytes32 expected = keccak256(abi.encode(keccak256("harmony+recovery>1"), address(msg.sender), uint256(refundByUser[msg.sender]), address(this), address(erc20), uint256(amount)));        
+        require(hash == expected, "wrong expected hash, bot?");
         
         IERC20Burnable(address(erc20)).burnFrom(msg.sender, amount);
         
         (uint256 refundAmount, ) = this.getExchangeRate(msg.sender, address(erc20), amount);
-        require(refundByUser[msg.sender] + refundAmount < refundMaxPerAddress, "Maximum per address reached");
+        require(refundByUser[msg.sender] + refundAmount <= refundMaxPerAddress, "Maximum per address reached");
 
         IERC20(refundToken).transfer(msg.sender, refundAmount);
 
@@ -118,6 +124,18 @@ contract ExchangeUSDS is IExchangeUSDS, ReentrancyGuardUpgradeable, OwnableUpgra
         bool qualified = this.isR1Voter(owner) > 0;
         uint256 rate = qualified ? pegRateRONE : pegRateNonRONE;
         uint256 refundAmount = OneAmount.mul(rate).div(DIVISOR);
+        
+        uint8 targetDec = IERC20Metadata(erc20).decimals();
+        uint8 refundDec = IERC20Metadata(refundToken).decimals();
+        if(targetDec > refundDec) {
+            uint256 deltaDec_ = 10**(targetDec - refundDec);            
+            refundAmount = refundAmount.div(deltaDec_);
+        }
+        else if(refundDec > targetDec) {
+            uint256 deltaDec_ = 10**(refundDec - targetDec);            
+            refundAmount = refundAmount.mul(deltaDec_);            
+        }
+
         return (refundAmount, qualified);
     }
     
