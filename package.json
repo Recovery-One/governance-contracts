@@ -19,6 +19,8 @@
     "hardhat-contract-sizer": "^2.6.1"
   },
   "dependencies": {
-    "@openzeppelin/contracts": "^4.7.3"
+    "@openzeppelin/contracts": "^4.7.3",
+    "@openzeppelin/merkle-tree": "^1.0.4",
+    "hardhat-dependency-compiler": "^1.1.3"
   }
 }

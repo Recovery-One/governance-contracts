@@ -76,7 +76,34 @@ RecoveryOne:  0x9De4d1267a1075E994ddc8d6bC31b9056B9b4133
 Governance: 0x589ff084D31f8758614FB534a310C447A46855a9
 ````
 
+npx hardhat flatten contracts/RecoveryExchangeProxy.sol > flatten2.sol
 
 ## Exported votes from snapshots:
 
 [Snapshot vote via graphql](https://hub.snapshot.org/graphql?operationName=Votes&query=%0Aquery%20Spaces%20%7B%0A%20%20spaces(%0A%20%20%20%20first%3A%2020%2C%0A%20%20%20%20skip%3A%200%2C%0A%20%20%20%20orderBy%3A%20"created"%2C%0A%20%20%20%20orderDirection%3A%20desc%0A%20%20)%20%7B%0A%20%20%20%20id%0A%20%20%20%20name%0A%20%20%20%20about%0A%20%20%20%20network%0A%20%20%20%20symbol%0A%20%20%20%20strategies%20%7B%0A%20%20%20%20%20%20name%0A%20%20%20%20%20%20network%0A%20%20%20%20%20%20params%0A%20%20%20%20%7D%0A%20%20%20%20admins%0A%20%20%20%20members%0A%20%20%20%20filters%20%7B%0A%20%20%20%20%20%20minScore%0A%20%20%20%20%20%20onlyMembers%0A%20%20%20%20%7D%0A%20%20%20%20plugins%0A%20%20%7D%0A%7D%0A%0Aquery%20Proposals%20%7B%0A%20%20proposals(%0A%20%20%20%20first%3A%2020%2C%0A%20%20%20%20skip%3A%200%2C%0A%20%20%20%20where%3A%20%7B%0A%20%20%20%20%20%20state%3A%20"closed"%2C%0A%20%20%20%20%20%20author%3A"0xf0effd4f2834402a0271d41dc62deca87b40e73b"%0A%20%20%20%20%7D%2C%0A%20%20%20%20orderBy%3A%20"created"%2C%0A%20%20%20%20orderDirection%3A%20desc%0A%20%20)%20%7B%0A%20%20%20%20id%0A%20%20%20%20title%0A%20%20%20%20body%0A%20%20%20%20choices%0A%20%20%20%20start%0A%20%20%20%20end%0A%20%20%20%20snapshot%0A%20%20%20%20state%0A%20%20%20%20author%0A%20%20%20%20space%20%7B%0A%20%20%20%20%20%20id%0A%20%20%20%20%20%20name%0A%20%20%20%20%7D%0A%20%20%7D%0A%7D%0A%0Aquery%20Votes%20%7B%0A%20%20votes%20(%0A%20%20%20%20first%3A%201000%0A%20%20%20%20where%3A%20%7B%0A%20%20%20%20%20%20proposal%3A%20"0xa42068299c4a50901160fc12a1d00785aef9a188613792d49ce8a80e0ae72d10"%0A%20%20%20%20%7D%0A%20%20)%20%7B%0A%20%20%20%20id%0A%20%20%20%20voter%0A%20%20%20%20created%0A%20%20%20%20choice%0A%20%20%20%20space%20%7B%0A%20%20%20%20%20%20id%0A%20%20%20%20%7D%0A%20%20%20%20vp%0A%20%20%7D%0A%7D%0A%0Aquery%20Follows%20%7B%0A%20%20follows%20(where%3A%20%7B%20follower%3A%20"0xeF8305E140ac520225DAf050e2f71d5fBcC543e7"%20%7D)%20%7B%0A%20%20%20%20id%0A%20%20%20%20follower%0A%20%20%20%20space%20%7B%0A%20%20%20%20%20%20id%0A%20%20%20%20%7D%0A%20%20%20%20created%0A%20%20%7D%0A%7D%0A)
+
+
+
+## ExchangeUSDS Deployment (Mainnet)
+
+```
+npx hardhat run scripts/upgrade_exchange.ts --network mainnet
+# Exchange Implementation= 0x1165C5526E660a56D289d85c45dBACcA54DF33B5
+# DEPLOYED to= 0x88197cE37D4e9bd5CF043415A991e4341B2BF06b
+```
+
+
+### Accessing proxy admin
+```
+const PA = await ethers.getContractFactory("ProxyAdmin");
+PA.attach("0x040F8DBc57728291d6BF0B70FEE6643E65594ba9").owner()
+```
+
+### Merkle root
+
+```
+./generate.sh
+npx hardhat run scripts/build_tree.ts
+```
+
+Merkle Root: 0x8ed0739e63633f3b37986c948856dd1c66a9833ae9783577a9ecb199d73f0f3d

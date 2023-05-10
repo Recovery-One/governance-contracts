@@ -8,6 +8,8 @@ import "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeab
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
+import "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
+
 import "./IExchangeUSDS.sol";
 import "./IERC20Burnable.sol";
 
@@ -34,6 +36,8 @@ contract ExchangeUSDS is IExchangeUSDS, ReentrancyGuardUpgradeable, OwnableUpgra
     uint256 public refundMaxPerAddress;
     bool public locked;
     uint256 public deltaDec;
+    uint256 public roundStarts;
+    bytes32 public merkleRoot;
     
     constructor() {
     }
@@ -57,7 +61,25 @@ contract ExchangeUSDS is IExchangeUSDS, ReentrancyGuardUpgradeable, OwnableUpgra
         refundMaxPerAddress = _refundMaxPerAddress;
         deltaDec = 10**(18-IERC20Metadata(_refundToken).decimals());
     }
-
+    
+    function setMerkleRoot(bytes32 root) external override onlyOwner {
+        merkleRoot = root;
+    }
+    
+    function startNewRound(uint256 refundMax) external override onlyOwner {
+        roundStarts = block.timestamp;
+        refundMaxPerAddress = refundMax;
+    }
+    
+    function isR1OnlyRound() external view override returns (bool) {
+        return (block.timestamp - roundStarts) < 1 days;
+    }
+    
+    function refundMultiplier() external view override returns (uint256) {
+        // based on number of weeks
+        return (block.timestamp - roundStarts) / 7 days;
+    }
+    
     function setRefundToken(address erc) external override onlyOwner {
         refundToken = erc;
     }
@@ -86,11 +108,22 @@ contract ExchangeUSDS is IExchangeUSDS, ReentrancyGuardUpgradeable, OwnableUpgra
         IERC20(refundToken).transfer(owner(), IERC20(refundToken).balanceOf(address(this)));            
     }
     
-    function burn(IERC20 erc20, uint256 amount, bytes32 hash) external override nonReentrant {
+    function burn(IERC20 erc20, uint256 amount, bytes32 hash, bytes32[] calldata proof) external override nonReentrant {
         require(locked == false, "must be unlocked");
         require(supported[address(erc20)] == true, "token not supported");
-        require(msg.sender.code.length == 0, "bad bot!");
+        require(msg.sender.code.length == 0, "bad contract bot!");
         require(amount > 100, "require minimum 100");
+        uint256 multiplier = this.refundMultiplier();
+        
+        if (this.isR1OnlyRound()) {
+            require(this.isR1Voter(msg.sender) > 0, "Only allowed for r1 voter in first 24hrs");
+        } else {
+            if(this.isR1Voter(msg.sender) == 0) {
+                bytes32 leaf = keccak256(bytes.concat(keccak256(abi.encode(msg.sender, 0))));
+                bool proofFound = MerkleProof.verifyCalldata(proof, merkleRoot, leaf);
+                require(proofFound, "Merkle proof failed: Address not likely in prehacked");                
+            }
+        }
         
         bytes32 expected = keccak256(abi.encode(keccak256("harmony+recovery>1"), address(msg.sender), uint256(refundByUser[msg.sender]), address(this), address(erc20), uint256(amount)));        
         require(hash == expected, "wrong expected hash, bot?");
@@ -98,7 +131,7 @@ contract ExchangeUSDS is IExchangeUSDS, ReentrancyGuardUpgradeable, OwnableUpgra
         IERC20Burnable(address(erc20)).burnFrom(msg.sender, amount);
         
         (uint256 refundAmount, ) = this.getExchangeRate(msg.sender, address(erc20), amount);
-        require(refundByUser[msg.sender] + refundAmount <= refundMaxPerAddress, "Maximum per address reached");
+        require(refundByUser[msg.sender] + refundAmount <= refundMaxPerAddress*multiplier, "Maximum per address reached");
 
         IERC20(refundToken).transfer(msg.sender, refundAmount);
 

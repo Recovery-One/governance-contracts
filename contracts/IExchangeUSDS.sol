@@ -7,6 +7,8 @@ interface IExchangeUSDS {
     event BurnToken(address erc20, uint256 amount, address refundToken, uint256 refundAmount);
     
     // WRITE FUNCTIONS: ONLY R1 COMMITTEE CAN UPDATE
+    function setMerkleRoot(bytes32 root) external;
+    function startNewRound(uint256 refundMax) external;    
     function setRefundToken(address erc) external;
     function setLocked(bool state) external;
     function setRateForR1(uint256 rate) external;
@@ -16,10 +18,12 @@ interface IExchangeUSDS {
     function withdraw() external;
     
     // BURN ERC20 and get refund token (USDS)
-    function burn(IERC20 erc20, uint256 amount, bytes32 hash) external;
+    function burn(IERC20 erc20, uint256 amount, bytes32 hash, bytes32[] calldata proof) external;
     
     // READ FUNCTIONS
     function isR1Voter(address voter) external view returns (uint256);
     function calculatePrehackOnePrice(address erc, uint256 amount) external view returns (uint256);
     function getExchangeRate(address owner, address erc20, uint256 amount) external view returns (uint256, bool);    
+    function isR1OnlyRound() external view returns (bool);    
+    function refundMultiplier() external view returns (uint256);
 }
