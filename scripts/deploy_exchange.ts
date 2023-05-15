@@ -6,6 +6,7 @@ interface Voter {
     vp: number;
   }
 var votes: Array<Voter> = require("./votes.json").data.votes;
+var newUSDC = "0xBC594CABd205bD993e7FfA6F3e9ceA75c1110da5";
 
 var depegged  = [["1USDC","0x985458E523dB3d53125813eD68c274899e9DfAb4","10000"],
                 ["1ETH","0x6983D1E6DEf3690C4d616b13597A09e6193EA013",11000000],
@@ -29,8 +30,8 @@ async function main() {
     const tokens = depegged.map(e =>e[1].toString());
     const ratios = depegged.map(e=>e[2]);    
     
-    const ErcMock = await ethers.getContractFactory("ERCMock");
-    const mockToken = await ErcMock.deploy("USDSMock", "USDSMOCK");
+    // const ErcMock = await ethers.getContractFactory("ERCMock");
+    // const mockToken = await ErcMock.deploy("USDSMock", "USDSMOCK");
 
     const ExchangeUSDS = await ethers.getContractFactory("ExchangeUSDS"); 
     const exchangeContractImpl = await ExchangeUSDS.deploy();
@@ -43,15 +44,13 @@ async function main() {
     // const exchangeContract = await RecoveryExchangeProxy.deploy(exchangeContractImpl.address, owner.address, initializer);
     // console.log("Proxy:", exchangeContract.address);
 
-    const exchangeContract = await upgrades.deployProxy(ExchangeUSDS, [voters, votesCount, tokens, ratios, mockToken.address, ethers.utils.parseEther("10000")], {
+    const exchangeContract = await upgrades.deployProxy(ExchangeUSDS, [voters, votesCount, tokens, ratios, newUSDC, ethers.utils.parseEther("10000")], {
       initializer: "initialize",
       kind: "transparent"
     });
     
-    await mockToken.transfer(exchangeContract.address, ethers.utils.parseUnits("100000", 6));
     
-    
-    console.log("deployed to=", exchangeContract.address);
+    console.log("DEPLOYED to=", exchangeContract.address);
 }
 // We recommend this pattern to be able to use async/await everywhere
 // and properly handle errors.

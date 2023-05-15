@@ -1,6 +1,7 @@
 import { HardhatUserConfig } from "hardhat/config";
 import "@nomicfoundation/hardhat-toolbox";
 import "hardhat-contract-sizer";
+import 'hardhat-dependency-compiler';
 
 // hardhat.config.js
 require('@openzeppelin/hardhat-upgrades');
@@ -24,9 +25,10 @@ const config: HardhatUserConfig = {
       accounts: accounts.Testnet,
     },
     mainnet: {
-      url: 'https://api.s0.t.hmny.io',
+      url: 'https://harmony-mainnet.chainstacklabs.com/',
       chainId: 1666600000,
       accounts: accounts.Mainnet,
+      gasPrice: 100000000000
     },    
   },
   mocha: {
@@ -38,6 +40,11 @@ const config: HardhatUserConfig = {
       optimizer: { enabled: true, runs: 200 },
     },
   },  
+  dependencyCompiler: {
+    paths: [
+      '@openzeppelin/contracts/proxy/transparent/ProxyAdmin.sol',
+    ],
+  }    
 };
 
 export default config;
