@@ -8,7 +8,7 @@ interface IExchangeUSDS {
     
     // WRITE FUNCTIONS: ONLY R1 COMMITTEE CAN UPDATE
     function setMerkleRoot(bytes32 root) external;
-    function startNewRound(uint256 refundMax) external;    
+    function startNewRound(uint256 currentRound, uint256 refundMax) external;    
     function setRefundToken(address erc) external;
     function setLocked(bool state) external;
     function setRateForR1(uint256 rate) external;

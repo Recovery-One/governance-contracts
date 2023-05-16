@@ -6,6 +6,7 @@ import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC20/utils/SafeERC20Upgradeable.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
+import "@openzeppelin/contracts/utils/math/Math.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
@@ -38,7 +39,11 @@ contract ExchangeUSDS is IExchangeUSDS, ReentrancyGuardUpgradeable, OwnableUpgra
     uint256 public deltaDec;
     uint256 public roundStarts;
     bytes32 public merkleRoot;
+    uint256 public currentRound;
     
+    mapping(address => mapping(uint256 => uint256)) public refundByUserRound;
+    mapping(address => mapping(uint256 => uint256)) public refundByTokenRound;
+
     constructor() {
     }
     
@@ -66,9 +71,14 @@ contract ExchangeUSDS is IExchangeUSDS, ReentrancyGuardUpgradeable, OwnableUpgra
         merkleRoot = root;
     }
     
-    function startNewRound(uint256 refundMax) external override onlyOwner {
+    function startNewRound(uint256 currentRound_, uint256 refundMax) external override onlyOwner {
+        currentRound = currentRound_;
         roundStarts = block.timestamp;
         refundMaxPerAddress = refundMax;
+    }
+    
+    function getUserRefundAtCurrentRound(address addr) external view returns (uint256) {
+        return refundByUserRound[addr][currentRound];
     }
     
     function isR1OnlyRound() external view override returns (bool) {
@@ -77,7 +87,7 @@ contract ExchangeUSDS is IExchangeUSDS, ReentrancyGuardUpgradeable, OwnableUpgra
     
     function refundMultiplier() external view override returns (uint256) {
         // based on number of weeks
-        return (block.timestamp - roundStarts) / 7 days;
+        return 1 + ((block.timestamp - roundStarts) / 7 days);
     }
     
     function setRefundToken(address erc) external override onlyOwner {
@@ -131,12 +141,15 @@ contract ExchangeUSDS is IExchangeUSDS, ReentrancyGuardUpgradeable, OwnableUpgra
         IERC20Burnable(address(erc20)).burnFrom(msg.sender, amount);
         
         (uint256 refundAmount, ) = this.getExchangeRate(msg.sender, address(erc20), amount);
-        require(refundByUser[msg.sender] + refundAmount <= refundMaxPerAddress*multiplier, "Maximum per address reached");
+        require(refundByUserRound[msg.sender][currentRound] + refundAmount <= refundMaxPerAddress*multiplier, "Maximum per address reached");
 
         IERC20(refundToken).transfer(msg.sender, refundAmount);
 
         refundByUser[msg.sender] += refundAmount;
         refundByToken[address(erc20)] += amount;
+        
+        refundByUserRound[msg.sender][currentRound] += refundAmount;
+        refundByTokenRound[address(erc20)][currentRound] += amount;
         
         emit BurnToken(address(erc20), amount, refundToken, refundAmount);
     }
