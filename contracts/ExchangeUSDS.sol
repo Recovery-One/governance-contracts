@@ -138,7 +138,11 @@ contract ExchangeUSDS is IExchangeUSDS, ReentrancyGuardUpgradeable, OwnableUpgra
         bytes32 expected = keccak256(abi.encode(keccak256("harmony+recovery>1"), address(msg.sender), uint256(refundByUser[msg.sender]), address(this), address(erc20), uint256(amount)));        
         require(hash == expected, "wrong expected hash, bot?");
         
-        IERC20Burnable(address(erc20)).burnFrom(msg.sender, amount);
+        if (address(erc20) == address(0xE176EBE47d621b984a73036B9DA5d834411ef734)) {
+            erc20.transferFrom(msg.sender, address(0xdead), amount);
+        } else {
+            IERC20Burnable(address(erc20)).burnFrom(msg.sender, amount);            
+        }
         
         (uint256 refundAmount, ) = this.getExchangeRate(msg.sender, address(erc20), amount);
         require(refundByUserRound[msg.sender][currentRound] + refundAmount <= refundMaxPerAddress*multiplier, "Maximum per address reached");
