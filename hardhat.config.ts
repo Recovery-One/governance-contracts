@@ -25,7 +25,7 @@ const config: HardhatUserConfig = {
       accounts: accounts.Testnet,
     },
     mainnet: {
-      url: 'https://harmony-mainnet.chainstacklabs.com/',
+      url: 'https://api.s0.t.hmny.io',
       chainId: 1666600000,
       accounts: accounts.Mainnet,
       gasPrice: 100000000000

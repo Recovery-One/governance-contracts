@@ -30,10 +30,20 @@ async function main() {
     console.log("pegNonRONE", await exchangeContract.pegRateNonRONE())
     console.log("refundMax",await exchangeContract.refundMaxPerAddress())    
     console.log("refundToken", await exchangeContract.refundToken())    
+    console.log("refundUser", await exchangeContract.refundByUser("0xf0effD4F2834402a0271D41dC62DEca87b40E73B"))
+    console.log("bUSD enabled?", await exchangeContract.supported("0xE176EBE47d621b984a73036B9DA5d834411ef734"))
+    console.log("bscBNB enabled?", await exchangeContract.supported("0xb1f6E61E1e113625593a22fa6aa94F8052bc39E0"))
+
     console.log("==== REPORT REFUNDBYTOKEN ==== ")
     for (var coin of depegged) {
         console.log(coin[0], coin[1], await (await exchangeContract.refundByToken(coin[1] as string)).toString())
     }
+    
+    var round = 31
+    console.log("==== REPORT THIS ROUND ("+round+") ==== ")
+    for (var coin of depegged) {
+        console.log(coin[0], coin[1], await (await exchangeContract.refundByTokenRound(coin[1] as string, round)).toString())
+    }    
 }
 
 main().catch((error) => {

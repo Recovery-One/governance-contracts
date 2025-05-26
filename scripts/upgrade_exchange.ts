@@ -10,6 +10,8 @@ async function main() {
 
     const exchangeContract = await upgrades.upgradeProxy(proxy, ExchangeUSDS)
     console.log("upgrade completed")
+    
+    // await exchangeContract.setMerkleRoot("0x8ed0739e63633f3b37986c948856dd1c66a9833ae9783577a9ecb199d73f0f3d")
     // const exchangeContract = ExchangeUSDS.attach(proxy)
     // await exchangeContract.transferOwnership('0x74360B35915D2261Ef5080fEcD60CD0188eA4B51');
 
